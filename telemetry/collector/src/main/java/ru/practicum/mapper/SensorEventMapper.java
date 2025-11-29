@@ -1,49 +1,77 @@
 package ru.practicum.mapper;
 
+import lombok.extern.slf4j.Slf4j;
 import ru.practicum.dto.sensor.*;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
+@Slf4j
 @Component
 public class SensorEventMapper {
 
     public SensorEventAvro toAvro(SensorEvent event) {
+        log.debug("Start mapping SensorEvent type: {}", event.getType());
+
         SensorEventAvro.Builder builder = SensorEventAvro.newBuilder()
                 .setId(event.getId())
                 .setHubId(event.getHubId())
                 .setTimestamp(event.getTimestamp());
 
         switch (event.getType()) {
-            case LIGHT_SENSOR_EVENT -> builder.setPayload(
-                    LightSensorAvro.newBuilder()
-                            .setLinkQuality(((LightSensorEvent) event).getLinkQuality())
-                            .setLuminosity(((LightSensorEvent) event).getLuminosity())
-                            .build());
+            case LIGHT_SENSOR_EVENT -> {
+                LightSensorEvent lightEvent = (LightSensorEvent) event;
+                log.debug("LIGHT_SENSOR_EVENT received. LinkQuality={}, Luminosity={}",
+                        lightEvent.getLinkQuality(), lightEvent.getLuminosity());
+                builder.setPayload(
+                        LightSensorAvro.newBuilder()
+                                .setLinkQuality(lightEvent.getLinkQuality())
+                                .setLuminosity(lightEvent.getLuminosity())
+                                .build());
+            }
 
-            case MOTION_SENSOR_EVENT -> builder.setPayload(
-                    MotionSensorAvro.newBuilder()
-                            .setLinkQuality(((MotionSensorEvent) event).getLinkQuality())
-                            .setMotion(((MotionSensorEvent) event).isMotion())
-                            .setVoltage((((MotionSensorEvent) event).getVoltage()))
-                            .build());
+            case MOTION_SENSOR_EVENT -> {
+                MotionSensorEvent motionEvent = (MotionSensorEvent) event;
+                log.debug("MOTION_SENSOR_EVENT received. LinkQuality={}, Motion={}, Voltage={}",
+                        motionEvent.getLinkQuality(), motionEvent.isMotion(), motionEvent.getVoltage());
+                builder.setPayload(
+                        MotionSensorAvro.newBuilder()
+                                .setLinkQuality(motionEvent.getLinkQuality())
+                                .setMotion(motionEvent.isMotion())
+                                .setVoltage(motionEvent.getVoltage())
+                                .build());
+            }
 
-            case CLIMATE_SENSOR_EVENT -> builder.setPayload(
-                    ClimateSensorAvro.newBuilder()
-                            .setTemperatureC(((ClimateSensorEvent) event).getTemperatureC())
-                            .setHumidity(((ClimateSensorEvent) event).getHumidity())
-                            .setCo2Level(((ClimateSensorEvent) event).getCo2Level())
-                            .build());
+            case CLIMATE_SENSOR_EVENT -> {
+                ClimateSensorEvent climateEvent = (ClimateSensorEvent) event;
+                log.debug("CLIMATE_SENSOR_EVENT received. Temp={}, Humidity={}, CO2={}",
+                        climateEvent.getTemperatureC(), climateEvent.getHumidity(), climateEvent.getCo2Level());
+                builder.setPayload(
+                        ClimateSensorAvro.newBuilder()
+                                .setTemperatureC(climateEvent.getTemperatureC())
+                                .setHumidity(climateEvent.getHumidity())
+                                .setCo2Level(climateEvent.getCo2Level())
+                                .build());
+            }
 
-            case SWITCH_SENSOR_EVENT -> builder.setPayload(
-                    SwitchSensorAvro.newBuilder()
-                            .setState(((SwitchSensorEvent) event).isState())
-                            .build());
+            case SWITCH_SENSOR_EVENT -> {
+                SwitchSensorEvent switchEvent = (SwitchSensorEvent) event;
+                log.debug("SWITCH_SENSOR_EVENT received. State={}", switchEvent.isState());
+                builder.setPayload(
+                        SwitchSensorAvro.newBuilder()
+                                .setState(switchEvent.isState())
+                                .build());
+            }
 
-            case TEMPERATURE_SENSOR_EVENT -> builder.setPayload(
-                    TemperatureSensorAvro.newBuilder()
-                            .setTemperatureC(((TemperatureSensorEvent) event).getTemperatureC())
-                            .setTemperatureF(((TemperatureSensorEvent) event).getTemperatureF())
-                            .build());
+            case TEMPERATURE_SENSOR_EVENT -> {
+                TemperatureSensorEvent tempEvent = (TemperatureSensorEvent) event;
+                log.debug("TEMPERATURE_SENSOR_EVENT received. TempC={}, TempF={}",
+                        tempEvent.getTemperatureC(), tempEvent.getTemperatureF());
+                builder.setPayload(
+                        TemperatureSensorAvro.newBuilder()
+                                .setTemperatureC(tempEvent.getTemperatureC())
+                                .setTemperatureF(tempEvent.getTemperatureF())
+                                .build());
+            }
         }
 
         return builder.build();

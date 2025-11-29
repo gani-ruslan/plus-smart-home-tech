@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class HubEventMapper {
 
     public HubEventAvro toAvro(HubEvent event) {
-        log.info("Маппинг HubEvent типа {}", event.getType());
+        log.debug("Start mapping HubEvent type: {}", event.getType());
         HubEventAvro.Builder builder = HubEventAvro.newBuilder()
                 .setHubId(event.getHubId())
                 .setTimestamp(event.getTimestamp());
@@ -20,7 +20,7 @@ public class HubEventMapper {
         switch (event.getType()) {
             case DEVICE_ADDED -> {
                 DeviceAddedEvent added = (DeviceAddedEvent) event;
-                log.debug("Маппим DEVICE_ADDED с id={}, deviceType={}", added.getId(), added.getDeviceType());
+                log.debug("DEVICE_ADDED with id={}, deviceType={}", added.getId(), added.getDeviceType());
                 builder.setPayload(
                         DeviceAddedEventAvro.newBuilder()
                                 .setId(added.getId())
@@ -31,16 +31,17 @@ public class HubEventMapper {
 
             case DEVICE_REMOVED -> {
                 DeviceRemovedEvent removed = (DeviceRemovedEvent) event;
-                log.debug("Маппим DEVICE_REMOVED с id={}", removed.getId());
+                log.debug("DEVICE_REMOVED with id={}", removed.getId());
                 builder.setPayload(
                         DeviceRemovedEventAvro.newBuilder()
                                 .setId(removed.getId())
                                 .build()
                 );
             }
+
             case SCENARIO_ADDED -> {
                 ScenarioAddedEvent added = (ScenarioAddedEvent) event;
-                log.debug("Маппим SCENARIO_ADDED с name={}, conditions={}, actions={}",
+                log.debug("SCENARIO_ADDED with name={}, conditions={}, actions={}",
                         added.getName(), added.getConditions().size(), added.getActions().size());
                 builder.setPayload(
                         ScenarioAddedEventAvro.newBuilder()
@@ -63,9 +64,10 @@ public class HubEventMapper {
                                 .build()
                 );
             }
+
             case SCENARIO_REMOVED -> {
                 ScenarioRemovedEvent removed = (ScenarioRemovedEvent) event;
-                log.debug("Маппим SCENARIO_REMOVED с name={}", removed.getName());
+                log.debug("SCENARIO_REMOVED with name={}", removed.getName());
                 builder.setPayload(
                         ScenarioRemovedEventAvro.newBuilder()
                                 .setName(removed.getName())
