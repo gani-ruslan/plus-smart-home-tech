@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import ru.practicum.dto.hub.*;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.*;
-
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -13,9 +12,11 @@ public class HubEventMapper {
 
     public HubEventAvro toAvro(HubEvent event) {
         log.debug("Start mapping HubEvent type: {}", event.getType());
+
         HubEventAvro.Builder builder = HubEventAvro.newBuilder()
                 .setHubId(event.getHubId())
-                .setTimestamp(event.getTimestamp());
+                .setTimestamp(event.getTimestamp()
+                );
 
         switch (event.getType()) {
             case DEVICE_ADDED -> {

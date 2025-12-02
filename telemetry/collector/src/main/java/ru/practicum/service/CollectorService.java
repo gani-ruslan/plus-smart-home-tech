@@ -23,12 +23,10 @@ public class CollectorService {
     private String hubsTopic;
 
     public void sendSensorEvent(SensorEventAvro event) {
-        byte[] payload = AvroSerializer.serialize(event);
-        kafkaTemplate.send(sensorsTopic, event.getId(), payload);
+        kafkaTemplate.send(sensorsTopic, event.getId(), AvroSerializer.serialize(event));
     }
 
     public void sendHubEvent(HubEventAvro event) {
-        byte[] payload = AvroSerializer.serialize(event);
-        kafkaTemplate.send(hubsTopic, event.getHubId(), payload);
+        kafkaTemplate.send(hubsTopic, event.getHubId(), AvroSerializer.serialize(event));
     }
 }

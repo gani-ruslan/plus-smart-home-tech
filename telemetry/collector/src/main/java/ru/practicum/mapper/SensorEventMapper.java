@@ -15,7 +15,8 @@ public class SensorEventMapper {
         SensorEventAvro.Builder builder = SensorEventAvro.newBuilder()
                 .setId(event.getId())
                 .setHubId(event.getHubId())
-                .setTimestamp(event.getTimestamp());
+                .setTimestamp(event.getTimestamp()
+                );
 
         switch (event.getType()) {
             case LIGHT_SENSOR_EVENT -> {
@@ -26,7 +27,8 @@ public class SensorEventMapper {
                         LightSensorAvro.newBuilder()
                                 .setLinkQuality(lightEvent.getLinkQuality())
                                 .setLuminosity(lightEvent.getLuminosity())
-                                .build());
+                                .build()
+                );
             }
 
             case MOTION_SENSOR_EVENT -> {
@@ -38,7 +40,8 @@ public class SensorEventMapper {
                                 .setLinkQuality(motionEvent.getLinkQuality())
                                 .setMotion(motionEvent.isMotion())
                                 .setVoltage(motionEvent.getVoltage())
-                                .build());
+                                .build()
+                );
             }
 
             case CLIMATE_SENSOR_EVENT -> {
@@ -50,7 +53,8 @@ public class SensorEventMapper {
                                 .setTemperatureC(climateEvent.getTemperatureC())
                                 .setHumidity(climateEvent.getHumidity())
                                 .setCo2Level(climateEvent.getCo2Level())
-                                .build());
+                                .build()
+                );
             }
 
             case SWITCH_SENSOR_EVENT -> {
@@ -59,7 +63,8 @@ public class SensorEventMapper {
                 builder.setPayload(
                         SwitchSensorAvro.newBuilder()
                                 .setState(switchEvent.isState())
-                                .build());
+                                .build()
+                );
             }
 
             case TEMPERATURE_SENSOR_EVENT -> {
@@ -70,7 +75,8 @@ public class SensorEventMapper {
                         TemperatureSensorAvro.newBuilder()
                                 .setTemperatureC(tempEvent.getTemperatureC())
                                 .setTemperatureF(tempEvent.getTemperatureF())
-                                .build());
+                                .build()
+                );
             }
         }
 

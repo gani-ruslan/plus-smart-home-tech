@@ -22,5 +22,5 @@ logging:
   level:
     root: INFO
     org.springframework.kafka: INFO
-    org.springframework.web: DEBUG
+    org.springframework.web: INFO
     org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: DEBUG
