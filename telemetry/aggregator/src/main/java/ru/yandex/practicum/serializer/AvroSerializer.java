@@ -1,4 +1,4 @@
-package ru.practicum.serializer;
+package ru.yandex.practicum.serializer;
 
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DatumWriter;
@@ -17,9 +17,8 @@ public class AvroSerializer {
             writer.write(record, encoder);
             encoder.flush();
             return outputStream.toByteArray();
-
         } catch (IOException e) {
-            throw new RuntimeException("Serialize process error:\n " + record.getClass(), e);
+            throw new RuntimeException("Serialization error: " + record.getClass(), e);
         }
     }
 }
