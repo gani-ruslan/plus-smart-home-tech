@@ -25,7 +25,7 @@ public class CollectorController extends CollectorControllerGrpc.CollectorContro
 
     @Override
     public void collectSensorEvent(SensorEventProto request, StreamObserver<Empty> responseObserver) {
-        log.info("gRPC: sensor event: {}", request);
+        log.info("\ngRPC: sensor event received:\n {}", request);
         try {
             var avro = sensorMapper.toAvro(request);
             collectorService.sendSensorEvent(avro);
@@ -38,7 +38,7 @@ public class CollectorController extends CollectorControllerGrpc.CollectorContro
 
     @Override
     public void collectHubEvent(HubEventProto request, StreamObserver<Empty> responseObserver) {
-        log.info("gRPC: hub event: {}", request);
+        log.info("\ngRPC: hub event received:\n {}", request);
         try {
             var avro = hubMapper.toAvro(request);
             collectorService.sendHubEvent(avro);
@@ -50,7 +50,7 @@ public class CollectorController extends CollectorControllerGrpc.CollectorContro
     }
 
     private void handleError(StreamObserver<?> responseObserver, Exception e, String context) {
-        log.error("Error {}: {}", context, e.getMessage(), e);
+        log.error("Error: {} in \n {}", context, e.getMessage(), e);
         responseObserver.onError(new StatusRuntimeException(
                 Status.INTERNAL.withDescription(e.getLocalizedMessage()).withCause(e)
         ));
