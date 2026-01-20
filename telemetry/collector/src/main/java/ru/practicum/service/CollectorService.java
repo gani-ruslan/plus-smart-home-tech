@@ -1,12 +1,11 @@
 package ru.practicum.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import ru.practicum.serializer.AvroSerializer;
 import lombok.RequiredArgsConstructor;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+import ru.practicum.serializer.AvroSerializer;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 
@@ -23,10 +22,12 @@ public class CollectorService {
     private String hubsTopic;
 
     public void sendSensorEvent(SensorEventAvro event) {
-        kafkaTemplate.send(sensorsTopic, event.getId(), AvroSerializer.serialize(event));
+        byte[] payload = AvroSerializer.serialize(event);
+        kafkaTemplate.send(sensorsTopic, event.getId(), payload);
     }
 
     public void sendHubEvent(HubEventAvro event) {
-        kafkaTemplate.send(hubsTopic, event.getHubId(), AvroSerializer.serialize(event));
+        byte[] payload = AvroSerializer.serialize(event);
+        kafkaTemplate.send(hubsTopic, event.getHubId(), payload);
     }
 }
