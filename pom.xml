@@ -19,8 +19,6 @@
         <module>telemetry</module>
         <module>infra</module>
         <module>commerce</module>
-        <module>infra/config-server</module>
-        <module>infra/discovery-server</module>
     </modules>
 
     <properties>
@@ -37,7 +35,7 @@
         <!--       Plugins       -->
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <avro-maven-plugin.version>${avro.version}</avro-maven-plugin.version>
-        <protobuf-plugin.version>2.4.0</protobuf-plugin.version>
+        <protobuf-plugin.version>0.6.1</protobuf-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -58,6 +56,14 @@
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
                 <version>${springdoc-openapi-starter.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud-dependencies.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
             <!--    GRPC dependencies management        -->
@@ -85,24 +91,18 @@
                 <version>${grpc.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud-dependencies.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework.retry</groupId>
-                <artifactId>spring-retry</artifactId>
-            </dependency>
-
             <!--    / GRPC dependencies management        -->
         </dependencies>
     </dependencyManagement>
 
     <build>
+        <extensions>
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.1</version>
+            </extension>
+        </extensions>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -116,9 +116,18 @@
                     <version>${avro-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
-                    <groupId>io.github.ascopes</groupId>
+                    <groupId>org.xolstice.maven.plugins</groupId>
                     <artifactId>protobuf-maven-plugin</artifactId>
                     <version>${protobuf-plugin.version}</version>
+                    <configuration>
+                        <protocArtifact>
+                            com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}
+                        </protocArtifact>
+                        <pluginId>grpc-java</pluginId>
+                        <pluginArtifact>
+                            io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}
+                        </pluginArtifact>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
