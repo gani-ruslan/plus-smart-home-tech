@@ -2,30 +2,24 @@ spring:
   application:
     name: collector
 
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
-    properties:
-      acks: all
-      linger.ms: 5
-      batch.size: 16384
-      buffer.memory: 33554432
+  config:
+    import: "configserver:"
 
-collector:
-  topics:
-    sensors: telemetry.sensors.v1
-    hubs: telemetry.hubs.v1
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        service-id: config-server
+      fail-fast: true
+      retry:
+        max-attempts: 12
+        initial-interval: 1000
+        multiplier: 1.5
+        max-interval: 5000
+server:
+  port: 0
 
-grpc:
-  server:
-    port: 59091
-    reflection-service-enabled: true
-
-logging:
-  level:
-    root: INFO
-    org.springframework.kafka: INFO
-    org.springframework.web: DEBUG
-    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: DEBUG
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/

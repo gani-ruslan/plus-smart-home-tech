@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: collector
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+    properties:
+      acks: all
+      linger.ms: 5
+      batch.size: 16384
+      buffer.memory: 33554432
+
+collector:
+  topics:
+    sensors: telemetry.sensors.v1
+    hubs: telemetry.hubs.v1
+
+grpc:
+  server:
+    port: 59310
+    reflection-service-enabled: true
+
+logging:
+  level:
+    root: INFO
+    org.springframework.kafka: INFO
+    org.springframework.web: DEBUG
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: DEBUG
+    net.devh.boot.grpc: INFO

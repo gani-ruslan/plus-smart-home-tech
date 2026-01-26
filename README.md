@@ -1,8 +1,15 @@
-# Smart Home Tech (Telemetry)
-
+# Smart Home Tech (Telemetry + Commerce)
 Учебный мульти-модульный проект «умного дома»: приём телеметрии по **gRPC**, доставка событий через **Kafka** (в формате **Avro**), агрегация состояния датчиков в «снапшоты» и выполнение сценариев автоматизации с отправкой действий в **Hub Router** по gRPC.
 
 Проект собран как Maven **multi-module**. Основная функциональность находится в модуле `telemetry/*`.
+
+В проекте два домена:
+
+- `telemetry/*` — приём и обработка телеметрии умного дома (gRPC + Kafka/Avro + Postgres).
+- `commerce/*` — базовые возможности интернет‑магазина (витрина товаров, корзина, склад).
+
+В модуле `infra/*` — инфраструктурные сервисы Spring Cloud: **Config Server** (Externalized Configuration) и **Discovery Server (Eureka)**.
+
 
 ---
 
@@ -44,9 +51,16 @@ flowchart LR
 │   ├── collector                 # gRPC server → Kafka (sensor/hub events)
 │   ├── aggregator                # Kafka sensor events → snapshots
 │   └── analyzer                  # scenarios + DB + gRPC client to Hub Router
-├── infra                         # (пока заглушка)
-└── commerce                      # (пока заглушка)
+├── infra
+│   ├── config-server             # Spring Cloud Config Server
+│   └── discovery-server          # Eureka Server
+└── commerce
+    ├── interaction-api           # DTO + Feign contracts
+    ├── shopping-store            # витрина товаров
+    ├── shopping-cart             # корзина покупателя
+    └── warehouse                 # склад
 ```
+
 
 ---
 
@@ -62,16 +76,57 @@ flowchart LR
 
 ---
 
+
+## Spring Cloud (этапы 5–6)
+
+В проект добавлены инфраструктурные сервисы:
+
+- **Config Server** — централизованное хранение конфигураций (Externalized Configuration).  
+  На этом этапе конфиги для `analyzer` и `collector` вынесены во внешний источник и подтягиваются при старте сервисов.
+- **Discovery Server (Eureka)** — сервис‑реестр для обнаружения микросервисов.  
+  Config Server регистрируется в Eureka, а остальные сервисы получают конфигурацию через discovery‑механизм (то есть могут стартовать без жёстко заданного URL Config Server).
+
+Практическая подсказка: если сервис иногда стартует «через раз» с ошибкой чтения конфигурации — почти всегда это гонка старта.  
+Решение: поднимать **Discovery Server → Config Server → остальные сервисы** (и/или включить retry/fail-fast настройки для Spring Cloud Config).
+
+---
+
+## Commerce: интернет‑магазин (этап 7)
+
+Реализованы базовые микросервисы интернет‑магазина:
+
+- **shopping-store** — витрина товаров (категории, состояние товара ACTIVE/DEACTIVATE, управление количеством через состояние ENDED/FEW/ENOUGH/MANY).
+- **shopping-cart** — корзина пользователя (добавление/изменение позиций, деактивация корзины).
+- **warehouse** — склад (учёт остатков и характеристик товара, проверка доступности для корзины, выдача адреса склада).
+
+Технические особенности:
+
+- **Database per Service** — каждый сервис работает только со своими данными в БД.
+- Общие DTO и контракты вызовов вынесены в **interaction-api** (включая интерфейсы Feign‑клиентов).
+- Взаимодействие сервисов — через **Feign** (REST). Для `shopping-cart → warehouse` добавлена проверка наличия товара на складе.
+- Рекомендация для запуска: `server.port=0` (случайный порт) + регистрация в Eureka; Eureka — на порту **8761**.
+
+---
+
+## OpenAPI / Swagger спецификации
+
+Спецификации API лежат рядом с репозиторием (JSON). Их удобно открывать в Swagger Editor / Swagger UI:
+
+- [`http-api-spec.json`](./http-api-spec.json) — HTTP API (генерация/приём событий).
+- [`shopping-store13012026.json`](./shopping-store13012026.json) — API сервиса **shopping-store** (`/api/v1/shopping-store/*`).
+- [`shopping-cart-16062025.json`](./shopping-cart-16062025.json) — API сервиса **shopping-cart** (`/api/v1/shopping-cart/*`).
+- [`warehouse-06022025.json`](./warehouse-06022025.json) — API сервиса **warehouse** (`/api/v1/warehouse/*`).
+
 ## Быстрый старт (локально)
 
-### 0) Требования
+### 1) Требования
 
 - JDK 21
 - Maven 3.9+
 - Docker + Docker Compose
 - (опционально) `grpcurl` для ручных gRPC-запросов
 
-### 1) Поднять инфраструктуру (Kafka + Postgres)
+### 2) Поднять инфраструктуру (Kafka + Postgres)
 
 В корне проекта:
 
@@ -93,7 +148,7 @@ docker compose logs -f kafka
 docker compose logs -f postgres
 ```
 
-### 2) Собрать проект
+### 3) Собрать проект
 
 Из корня репозитория:
 
@@ -103,23 +158,35 @@ mvn clean package
 
 > В процессе сборки генерируются Java-классы из `*.avdl` и `*.proto` (модули `telemetry/serialization/*`).
 
-### 3) Запустить сервисы
+### 4) Запустить сервисы
 
 Рекомендуемый порядок:
 
-1) **Collector**
-2) **Aggregator**
-3) **Analyzer**
+1) **Discovery Server (Eureka)**
+2) **Config Server**
+3) **Collector**
+4) **Aggregator**
+5) **Analyzer**
+6) **shopping-store**
+7) **warehouse**
+8) **shopping-cart**
 
-Вариант A — через Maven:
+#### Вариант A — через Maven:
 
 ```bash
-mvn -pl telemetry/collector spring-boot:run
-mvn -pl telemetry/aggregator spring-boot:run
-mvn -pl telemetry/analyzer   spring-boot:run
+mvn -pl infra/discovery-server spring-boot:run
+mvn -pl infra/config-server    spring-boot:run
+
+mvn -pl telemetry/collector    spring-boot:run
+mvn -pl telemetry/aggregator   spring-boot:run
+mvn -pl telemetry/analyzer     spring-boot:run
+
+mvn -pl commerce/shopping-store spring-boot:run
+mvn -pl commerce/warehouse      spring-boot:run
+mvn -pl commerce/shopping-cart  spring-boot:run
 ```
 
-Вариант B — через JAR (после `mvn package`):
+#### Вариант B — через JAR (после `mvn package`):
 
 ```bash
 java -jar telemetry/collector/target/collector-1.0-SNAPSHOT.jar
@@ -129,7 +196,7 @@ java -jar telemetry/analyzer/target/analyzer-1.0-SNAPSHOT.jar
 
 ---
 
-## Важный момент про Hub Router
+## Hub Router
 
 `Analyzer` — **gRPC-клиент**. Он пытается отправлять действия в сервис **Hub Router** по адресу:
 
@@ -140,7 +207,11 @@ java -jar telemetry/analyzer/target/analyzer-1.0-SNAPSHOT.jar
 
 ---
 
-## Конфигурация (что где настраивается)
+## Конфигурация
+
+> Примечание: после внедрения Spring Cloud Config (этап 5) и Eureka Discovery (этап 6) часть параметров может приезжать из **Config Server**.  
+> Локальные `application.yaml` остаются как bootstrap/локальные дефолты, а «истина» для окружений хранится во внешней конфигурации.
+
 
 ### Collector
 
@@ -149,8 +220,8 @@ java -jar telemetry/analyzer/target/analyzer-1.0-SNAPSHOT.jar
 - gRPC сервер: `grpc.server.port=59091`
 - Kafka: `spring.kafka.bootstrap-servers=localhost:9092`
 - Топики:
-    - `collector.topics.sensors=telemetry.sensors.v1`
-    - `collector.topics.hubs=telemetry.hubs.v1`
+  - `collector.topics.sensors=telemetry.sensors.v1`
+  - `collector.topics.hubs=telemetry.hubs.v1`
 
 ### Aggregator
 
@@ -158,25 +229,25 @@ java -jar telemetry/analyzer/target/analyzer-1.0-SNAPSHOT.jar
 
 - Kafka: `spring.kafka.bootstrap-servers=localhost:9092`
 - Топики:
-    - `aggregator.topics.sensors=telemetry.sensors.v1`
-    - `aggregator.topics.snapshots=telemetry.snapshots.v1`
+  - `aggregator.topics.sensors=telemetry.sensors.v1`
+  - `aggregator.topics.snapshots=telemetry.snapshots.v1`
 
 ### Analyzer
 
 Файл: `telemetry/analyzer/src/main/resources/application.yaml`
 
 - Kafka:
-    - `analyzer.topics.hubs=telemetry.hubs.v1`
-    - `analyzer.topics.snapshots=telemetry.snapshots.v1`
+  - `analyzer.topics.hubs=telemetry.hubs.v1`
+  - `analyzer.topics.snapshots=telemetry.snapshots.v1`
 - Postgres:
-    - `spring.datasource.url=jdbc:postgresql://localhost:5432/smarthome`
-    - `spring.datasource.username=postgres`
-    - `spring.datasource.password=postgres`
+  - `spring.datasource.url=jdbc:postgresql://localhost:5432/smarthome`
+  - `spring.datasource.username=postgres`
+  - `spring.datasource.password=postgres`
 - Инициализация схемы:
-    - `spring.sql.init.mode=always` (используется `schema.sql`)
+  - `spring.sql.init.mode=always` (используется `schema.sql`)
 - gRPC клиент Hub Router:
-    - `grpc.client.hub-router.address=static://localhost:59090`
-    - `grpc.client.hub-router.negotiation-type=plaintext`
+  - `grpc.client.hub-router.address=static://localhost:59090`
+  - `grpc.client.hub-router.negotiation-type=plaintext`
 
 ---
 
@@ -351,4 +422,4 @@ docker compose logs -f postgres
 
 ### 3) В логах Analyzer ошибки gRPC на Hub Router
 
-Это нормально, если Hub Router не запущен. Для полноценного end-to-end теста нужен внешний сервис на `localhost:59090` (или измени адрес в конфиге).
+Это нормально, если Hub Router не запущен. Для полноценного end-to-end теста нужен внешний сервис на `localhost:59090` (или измените адрес в конфиге).
