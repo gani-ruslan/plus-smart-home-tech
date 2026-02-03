@@ -18,6 +18,8 @@
         <module>shopping-store</module>
         <module>shopping-cart</module>
         <module>warehouse</module>
+        <module>payment</module>
+        <module>order</module>
+        <module>delivery</module>
     </modules>
-
 </project>
