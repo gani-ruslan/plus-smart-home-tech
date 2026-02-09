@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.enums.ProductCategory;
 import ru.yandex.practicum.enums.ProductState;
-import ru.yandex.practicum.exception.ProductNotFoundException;
+import ru.yandex.practicum.exceptions.ProductNotFoundException;
 import ru.yandex.practicum.mapper.ShoppingStoreMapper;
 import ru.yandex.practicum.model.Product;
 import ru.yandex.practicum.repository.ShoppingStoreRepository;
